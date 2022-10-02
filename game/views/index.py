@@ -1,4 +1,4 @@
 from django.shortcuts import render
 
 def index(request):
-    retrun render(request, 'mutiends/wed.html')
+    return render(request, 'multiends/web.html')
