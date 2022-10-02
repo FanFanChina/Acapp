@@ -14,7 +14,7 @@ SECRET_KEY = 'django-insecure-ps3@66)kh5)i2oa%&gm1)0xycl6en_k%&+h3luwu&$5w29sjjy
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['8.130.35.60']
+ALLOWED_HOSTS = ['47.96.186.213']
 
 # Application definition
 # 安装的 App 
