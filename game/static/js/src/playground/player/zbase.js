@@ -8,12 +8,16 @@ class Player extends AcGameObject {
         this.color = color;
         this.vx = 0;
         this.vy = 0;
+        this.damage_x = 0;
+        this.damage_y = 0;
+        this.damage_speed = 0;
         this.speed = speed;
         this.is_me = is_me;
         this.move_length = 0;
         this.ctx = this.playground.game_map.ctx;
         // 浮点运算时小于eps就算0
         this.eps = 0.1;
+        this.friction = 0.9;
         this.cur_skill = null;
         this.start();
     }
@@ -21,9 +25,14 @@ class Player extends AcGameObject {
     start() {
         if(this.is_me) {
             this.add_listening_events();
+        } else {
+            let tx = Math.random() * this.playground.width;
+            let ty = Math.random() * this.playground.height;
+            this.move_to(tx, ty);
         }
     }
 
+    // 事件监听函数
     add_listening_events() {
         let outer = this;
         // 去除右键菜单
@@ -47,7 +56,6 @@ class Player extends AcGameObject {
                 return false;
             }
         });
-
     }
 
     // 发射火球
@@ -61,7 +69,9 @@ class Player extends AcGameObject {
         let color = "orange";
         let speed = this.playground.height * 0.5;
         let move_length = this.playground.height * 1;
-        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length);
+        // 火球伤害
+        let damage = this.playground.height * 0.01;
+        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length, damage);
     }
 
     // 求两点间距
@@ -71,6 +81,7 @@ class Player extends AcGameObject {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
+    // 移动到(tx, ty)
     move_to(tx, ty) {
         // 移动距离
         this.move_length = this.get_dist(this.x, this.y, tx, ty);
@@ -80,18 +91,48 @@ class Player extends AcGameObject {
         this.vy = Math.sin(angle);
     }
 
+    // 被攻击
+    is_attacked(angle, damage) {
+        // 被攻击时半径减小
+        this.radius -= damage;
+        if(this.radius < 10) {
+            this.destroy();
+            return false;
+        }
+        this.damage_x = Math.cos(angle);
+        this.damage_y = Math.sin(angle);
+        this.damage_speed = damage * 88;
+        this.speed *= 1.3;
+    }
+
     update() {
-        if(this.move_length < this.eps) this.move_length = this.vx = this.vy = 0;
-        else {
-            // 取min防止出界，speed指的是每秒的速度所以要除以1000，算出每毫秒的速度
-            let moved = Math.min(this.move_length, this.speed / 1000 * this.timedelta);
-            this.x += this.vx * moved;
-            this.y += this.vy * moved;
-            this.move_length -= moved;
+        if(this.damage_speed > 10) {
+            this.vx = this.vy = 0;
+            this.move_length = 0;
+            this.x += this.damage_x * this.damage_speed / 1000 * this.timedelta;
+            this.y += this.damage_y * this.damage_speed / 1000 * this.timedelta;
+            this.damage_speed *= this.friction;
+        } else {
+            if (this.move_length < this.eps) {
+                this.move_length = this.vx = this.vy = 0;
+                if (!this.is_me) {
+                    let tx = Math.random() * this.playground.width;
+                    let ty = Math.random() * this.playground.height;
+                    this.move_to(tx, ty);
+                }
+            }
+            else {
+                // 取min防止出界，speed指的是每秒的速度所以要除以1000，算出每毫秒的速度
+                let moved = Math.min(this.move_length, this.speed / 1000 * this.timedelta);
+                this.x += this.vx * moved;
+                this.y += this.vy * moved;
+                this.move_length -= moved;
+            }
         }
         this.render();
     }
 
+    // 渲染函数
     render() {
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, Math.PI * 2, false);
