@@ -29,7 +29,6 @@ class FireBall extends AcGameObject {
         this.x += this.vx * moved;
         this.y += this.vy * moved;
         this.move_length -= moved;
-
         // 非本人 + 相交 == 攻击
         for(let i = 0; i < this.playground.players.length; i ++ ) {
             let player = this.playground.players[i];
@@ -46,9 +45,9 @@ class FireBall extends AcGameObject {
     }
 
     // 判断是否相交
-    is_collision(player) {
-        let dist = this.get_dist(this.x, this.y, player.x, player.y);
-        if(dist < this.radius + player.radius) return true;
+    is_collision(obj) {
+        let dist = this.get_dist(this.x, this.y, obj.x, obj.y);
+        if(dist < this.radius + obj.radius) return true;
         return false;
     }
 
@@ -62,7 +61,7 @@ class FireBall extends AcGameObject {
     // 渲染函数
     render() {
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, Math.PI * 2, false);
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }

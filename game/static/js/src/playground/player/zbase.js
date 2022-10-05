@@ -19,6 +19,7 @@ class Player extends AcGameObject {
         this.eps = 0.1;
         this.friction = 0.9;
         this.cur_skill = null;
+        this.spent_time = 0;
         this.start();
     }
 
@@ -93,12 +94,27 @@ class Player extends AcGameObject {
 
     // 被攻击
     is_attacked(angle, damage) {
+        // 击中粒子效果
+        for(let i = 0; i < 20 + Math.random() * 10; i ++ ) {
+            let x = this.x;
+            let y = this.y;
+            let radius = this.radius * Math.random() * 0.1;
+            let angle = Math.random() * Math.PI * 2;
+            let vx = Math.cos(angle);
+            let vy = Math.sin(angle);
+            let color = this.color;
+            let speed = this.speed * 10;
+            let move_length = this.radius * Math.random() * 6;
+            new Particle(this.playground, x, y, radius, vx, vy, color, speed, move_length);
+        }
         // 被攻击时半径减小
         this.radius -= damage;
+        // 半径过小时死亡
         if(this.radius < 10) {
             this.destroy();
             return false;
         }
+        // 击中弹性效果
         this.damage_x = Math.cos(angle);
         this.damage_y = Math.sin(angle);
         this.damage_speed = damage * 88;
@@ -106,7 +122,12 @@ class Player extends AcGameObject {
     }
 
     update() {
-        if(this.damage_speed > 10) {
+        this.spent_time += this.timedelta / 1000;
+        if (this.spent_time > 4 && Math.random() < 1 / 300.0 && !this.is_me) {
+            let player = this.playground.players[0];
+            this.shoot_fireball(player.x, player.y);
+        }
+        if (this.damage_speed > 10) {
             this.vx = this.vy = 0;
             this.move_length = 0;
             this.x += this.damage_x * this.damage_speed / 1000 * this.timedelta;

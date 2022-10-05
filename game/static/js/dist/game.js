@@ -135,6 +135,44 @@ class GameMap extends AcGameObject {
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
 }
+class Particle extends AcGameObject {
+    constructor(playground, x, y, radius, vx, vy, color, speed, move_length) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.game_map.ctx;
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.vx = vx;
+        this.vy = vy;
+        this.color = color;
+        this.speed = speed;
+        this.move_length = move_length;
+        this.friction = 0.9;
+        this.eps = 3;
+    }
+    start() {}
+
+    update() {
+        if (this.move_length < this.eps || this.speed < this.eps) {
+            this.destroy();
+            return;
+        }
+        let moved = Math.min(this.move_length, this.speed / 1000 * this.timedelta);
+        this.x += this.vx * moved;
+        this.y += this.vy * moved;
+        this.move_length -= moved;
+        this.speed *= this.friction;
+        this.render();
+    }
+
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
+}
 class Player extends AcGameObject {
     constructor(playground, x, y, radius, color, speed, is_me) {
         super();
@@ -156,6 +194,7 @@ class Player extends AcGameObject {
         this.eps = 0.1;
         this.friction = 0.9;
         this.cur_skill = null;
+        this.spent_time = 0;
         this.start();
     }
 
@@ -230,12 +269,27 @@ class Player extends AcGameObject {
 
     // 被攻击
     is_attacked(angle, damage) {
+        // 击中粒子效果
+        for(let i = 0; i < 20 + Math.random() * 10; i ++ ) {
+            let x = this.x;
+            let y = this.y;
+            let radius = this.radius * Math.random() * 0.1;
+            let angle = Math.random() * Math.PI * 2;
+            let vx = Math.cos(angle);
+            let vy = Math.sin(angle);
+            let color = this.color;
+            let speed = this.speed * 10;
+            let move_length = this.radius * Math.random() * 6;
+            new Particle(this.playground, x, y, radius, vx, vy, color, speed, move_length);
+        }
         // 被攻击时半径减小
         this.radius -= damage;
+        // 半径过小时死亡
         if(this.radius < 10) {
             this.destroy();
             return false;
         }
+        // 击中弹性效果
         this.damage_x = Math.cos(angle);
         this.damage_y = Math.sin(angle);
         this.damage_speed = damage * 88;
@@ -243,7 +297,12 @@ class Player extends AcGameObject {
     }
 
     update() {
-        if(this.damage_speed > 10) {
+        this.spent_time += this.timedelta / 1000;
+        if (this.spent_time > 4 && Math.random() < 1 / 300.0 && !this.is_me) {
+            let player = this.playground.players[0];
+            this.shoot_fireball(player.x, player.y);
+        }
+        if (this.damage_speed > 10) {
             this.vx = this.vy = 0;
             this.move_length = 0;
             this.x += this.damage_x * this.damage_speed / 1000 * this.timedelta;
@@ -308,7 +367,6 @@ class FireBall extends AcGameObject {
         this.x += this.vx * moved;
         this.y += this.vy * moved;
         this.move_length -= moved;
-
         // 非本人 + 相交 == 攻击
         for(let i = 0; i < this.playground.players.length; i ++ ) {
             let player = this.playground.players[i];
@@ -325,9 +383,9 @@ class FireBall extends AcGameObject {
     }
 
     // 判断是否相交
-    is_collision(player) {
-        let dist = this.get_dist(this.x, this.y, player.x, player.y);
-        if(dist < this.radius + player.radius) return true;
+    is_collision(obj) {
+        let dist = this.get_dist(this.x, this.y, obj.x, obj.y);
+        if(dist < this.radius + obj.radius) return true;
         return false;
     }
 
@@ -341,7 +399,7 @@ class FireBall extends AcGameObject {
     // 渲染函数
     render() {
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, Math.PI * 2, false);
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
@@ -360,9 +418,15 @@ class AcGamePlayground {
         this.players = [];
         this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true));
         for(let i = 1; i <= 6; i ++ ) {
-            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "lightblue", this.height * 0.15, false));
+            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, this.get_random_color(), this.height * 0.15, false));
         }
         this.start();
+    }
+
+    // 随机皮肤
+    get_random_color() {
+        let colors = ["lightblue", "pink", "grey", "green"];
+        return colors[Math.floor(Math.random() * 5)];
     }
 
     start() {}

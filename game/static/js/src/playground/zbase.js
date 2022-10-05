@@ -12,9 +12,15 @@ class AcGamePlayground {
         this.players = [];
         this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true));
         for(let i = 1; i <= 6; i ++ ) {
-            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "lightblue", this.height * 0.15, false));
+            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, this.get_random_color(), this.height * 0.15, false));
         }
         this.start();
+    }
+
+    // 随机皮肤
+    get_random_color() {
+        let colors = ["lightblue", "pink", "grey", "green"];
+        return colors[Math.floor(Math.random() * 5)];
     }
 
     start() {}
