@@ -300,7 +300,11 @@ class Player extends AcGameObject {
         this.spent_time += this.timedelta / 1000;
         if (this.spent_time > 4 && Math.random() < 1 / 300.0 && !this.is_me) {
             let player = this.playground.players[0];
-            this.shoot_fireball(player.x, player.y);
+            // 预判玩家方向，射向玩家pre_time秒后的位置
+            let pre_time = 0.2;
+            let tx = player.x + player.speed / 1000 * this.vx * this.timedelta * pre_time;
+            let ty = player.y + player.speed / 1000 * this.vy * this.timedelta * pre_time;
+            this.shoot_fireball(tx, ty);
         }
         if (this.damage_speed > 10) {
             this.vx = this.vy = 0;
