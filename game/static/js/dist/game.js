@@ -339,6 +339,12 @@ class Player extends AcGameObject {
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
+
+    on_destroy() {
+        for (let i = 0; i < this.playground.players.length; i ++ ) {
+            if(this.playground.players[i] === this) this.playground.players.splice(i, 1);
+        }
+    }
 }
 class FireBall extends AcGameObject {
     constructor(playground, player, x, y, radius, vx, vy, color, speed, move_length, damage) {
